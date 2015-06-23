@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -20,9 +21,15 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import sk.banik.registrations.entities.RegState;
 import sk.banik.registrations.entities.Registration;
 import sk.banik.registrations.entities.RegistrationPK;
+import sk.banik.registrations.entities.Unit;
+import sk.banik.registrations.entities.User;
+import sk.banik.registrations.session.RegStateFacade;
 import sk.banik.registrations.session.RegistrationFacade;
+import sk.banik.registrations.session.UnitFacade;
+import sk.banik.registrations.session.UserFacade;
 
 /**
  *
@@ -32,11 +39,19 @@ import sk.banik.registrations.session.RegistrationFacade;
         urlPatterns = {"/registrations",
             "/edit_reg",
             "/save_reg",
-            "/add_reg"})
+            "/create_reg",
+            "/add_reg",
+            "/del_reg"})
 public class RegistrationsServlet extends HttpServlet {
 
     @EJB
     private RegistrationFacade regFacade;
+    @EJB
+    private UserFacade userFacade;
+    @EJB
+    private RegStateFacade regStatusFacade;
+    @EJB
+    private UnitFacade unitFacade;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -94,8 +109,6 @@ public class RegistrationsServlet extends HttpServlet {
             } catch (ParseException ex) {
                 Logger.getLogger(RegistrationsServlet.class.getName()).log(Level.SEVERE, null, ex);
             }
-
-            System.out.println("");
         } else if (userPath.equals("/save_reg")) {
             try {
                 String icoString = request.getParameter("icoOrigin");
@@ -122,10 +135,61 @@ public class RegistrationsServlet extends HttpServlet {
             }
 
             request.getRequestDispatcher("/WEB-INF/view/view_regs.jsp").forward(request, response);
+        } else if (userPath.equals("/create_reg")) {
+            // load creators, statuses
+            // TODO change to logged in user
+            List<User> users = userFacade.findAll();
+            request.setAttribute("users", users);
+
+            List<RegState> regStatuses = regStatusFacade.findAll();
+            request.setAttribute("statuses", regStatuses);
+
+            request.getRequestDispatcher("/WEB-INF/view/create_reg.jsp").forward(request, response);
         } else if (userPath.equals("/add_reg")) {
-            
+            String icoString = request.getParameter("ico");
+            String companyName = request.getParameter("companyName");
+            Date today = Calendar.getInstance().getTime();
+            short creatorId = Short.parseShort(request.getParameter("user"));
+
+            List<Unit> units = unitFacade.findByUserId(creatorId);
+            Unit unit = null;
+            if (units.size() > 0) {
+                unit = units.get(0);
+            }
+
+            int statusId = Integer.parseInt(request.getParameter("status"));
+            RegState status = regStatusFacade.find(statusId);
+
+            Registration newReg = new Registration(icoString, today);
+            newReg.setCompanyName(companyName);
+            newReg.setRegStateid(status);
+            newReg.setUnit(unit);
+
+            regFacade.create(newReg);
+
+            List<Registration> regs = new LinkedList<>();
+            regs.add(regFacade.find(newReg.getRegistrationPK()));
+
+            request.setAttribute("registrations", regs);
 
             request.getRequestDispatcher("/WEB-INF/view/view_regs.jsp").forward(request, response);
+        } else if (userPath.equals("/del_reg")) {
+            try {
+                String icoString = request.getParameter("ico");
+                String regDateString = request.getParameter("reg_date");
+
+                DateFormat formatter = new SimpleDateFormat("dd.MM.yyyy-hh:mm:ss");
+                Date regDate = (Date) formatter.parse(regDateString);
+
+                Registration foundReg = regFacade.find(new RegistrationPK(icoString, regDate));
+
+                regFacade.remove(foundReg);
+
+                request.getRequestDispatcher("/index.jsp").forward(request, response);
+            } catch (ParseException ex) {
+                Logger.getLogger(RegistrationsServlet.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
         }
 
     }

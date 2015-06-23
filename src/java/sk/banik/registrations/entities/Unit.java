@@ -32,6 +32,7 @@ import javax.xml.bind.annotation.XmlTransient;
     @NamedQuery(name = "Unit.findByBranchId", query = "SELECT u FROM Unit u WHERE u.unitPK.branchId = :branchId")})
 public class Unit implements Serializable {
     private static final long serialVersionUID = 1L;
+    public static final String NAMED_QUERY_BY_USER_ID = "Unit.findByUserId";
     @EmbeddedId
     protected UnitPK unitPK;
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "unit")

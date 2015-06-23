@@ -26,11 +26,12 @@
                         <input type="hidden" name="ico" value="${item.registrationPK.ico}"/>
                         <fmt:formatDate value="${item.registrationPK.regDate}" pattern="dd.MM.yyyy-hh:mm:ss" var="userDate" />
                         <input type="hidden" name="reg_date" value="${userDate}"/>
-                        <input type="hidden" name="key" value="${item.registrationPK}"/>
                         <input type="submit" value="Edit"/>
                     </form>
-                    <form action="delete">
-                        <input type="hidden"/>
+                    <form action="del_reg" method="POST">
+                        <input type="hidden" name="ico" value="${item.registrationPK.ico}"/>
+                        <fmt:formatDate value="${item.registrationPK.regDate}" pattern="dd.MM.yyyy-hh:mm:ss" var="userDate" />
+                        <input type="hidden" name="reg_date" value="${userDate}"/>
                         <input type="submit" value="Delete"/>
                     </form>
                 </td>

@@ -5,9 +5,11 @@
  */
 package sk.banik.registrations.session;
 
+import java.util.List;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import sk.banik.registrations.entities.Unit;
 
 /**
@@ -28,4 +30,11 @@ public class UnitFacade extends AbstractFacade<Unit> {
         super(Unit.class);
     }
     
+    public List<Unit> findByUserId(short userId){
+        TypedQuery<Unit> query = em.createNamedQuery(Unit.NAMED_QUERY_BY_USER_ID, Unit.class);
+        query.setParameter("userId", userId);
+        List<Unit> results = query.getResultList();
+        
+        return results;
+    }
 }
